@@ -14,7 +14,7 @@ class LSGANConfig:
     """Store hyperparameters, paths, and runtime helpers for training."""
 
     seed: int = 51
-    n_epochs: int = 3
+    n_epochs: int = 300
     batch_size: int = 64
     lr_g: float = 2e-4
     lr_d: float = 1e-4
