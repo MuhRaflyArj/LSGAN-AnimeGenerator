@@ -1,5 +1,7 @@
-import numpy as np
+"""Plotting helpers for GAN training curves and generated samples."""
+
 import matplotlib.pyplot as plt
+import numpy as np
 import torch
 from IPython.display import clear_output
 from torchvision.utils import make_grid, save_image
@@ -18,6 +20,8 @@ def sample_images(
     out_prefix="epoch",
     images_dir="images/lsgan",
 ):
+    """Generate and save a grid of sample images."""
+
     generator.eval()
     with torch.no_grad():
         if fixed_noise is not None:
@@ -65,6 +69,8 @@ def plot_training_dashboard(
     title_prefix="",
     images_dir="images/lsgan",
 ):
+    """Plot loss, score, margin, and learning-rate dashboards."""
+
     title_head = f"{title_prefix} " if title_prefix else ""
     save_head = f"{save_prefix}_" if save_prefix else ""
 
@@ -72,9 +78,21 @@ def plot_training_dashboard(
     plt.plot(g_losses, alpha=0.3, label="G loss (raw)", color="tab:blue")
     plt.plot(d_losses, alpha=0.3, label="D loss (raw)", color="tab:orange")
     if len(g_losses) >= 25:
-        plt.plot(np.arange(24, len(g_losses)), smooth_curve(g_losses, window=25), label="G loss (smooth)", color="tab:blue", linewidth=2)
+        plt.plot(
+            np.arange(24, len(g_losses)),
+            smooth_curve(g_losses, window=25),
+            label="G loss (smooth)",
+            color="tab:blue",
+            linewidth=2,
+        )
     if len(d_losses) >= 25:
-        plt.plot(np.arange(24, len(d_losses)), smooth_curve(d_losses, window=25), label="D loss (smooth)", color="tab:orange", linewidth=2)
+        plt.plot(
+            np.arange(24, len(d_losses)),
+            smooth_curve(d_losses, window=25),
+            label="D loss (smooth)",
+            color="tab:orange",
+            linewidth=2,
+        )
     plt.title(f"{title_head}Training Loss Curves")
     plt.xlabel("Step")
     plt.ylabel("Loss")
@@ -98,9 +116,14 @@ def plot_training_dashboard(
     plt.show()
     plt.close()
 
-    fig, axes = plt.subplots(1, 2, figsize=(14, 4))
+    _, axes = plt.subplots(1, 2, figsize=(14, 4))
     axes[0].plot(epoch_margins, marker="o", color="tab:purple")
-    axes[0].axhline(best_margin, linestyle="--", color="tab:gray", label=f"Best margin: {best_margin:.4f}")
+    axes[0].axhline(
+        best_margin,
+        linestyle="--",
+        color="tab:gray",
+        label=f"Best margin: {best_margin:.4f}",
+    )
     axes[0].set_title(f"{title_head}Epoch Margin (D(real) - D(fake))")
     axes[0].set_xlabel("Epoch")
     axes[0].set_ylabel("Margin")
@@ -121,7 +144,17 @@ def plot_training_dashboard(
     plt.close()
 
 
-def plot_final_samples(generator, fixed_noise, latent_dim, device, save_prefix="", title_prefix="", images_dir="images/lsgan"):
+def plot_final_samples(
+    generator,
+    fixed_noise,
+    latent_dim,
+    device,
+    save_prefix="",
+    title_prefix="",
+    images_dir="images/lsgan",
+):
+    """Plot final random and fixed-noise sample grids."""
+
     title_head = f"{title_prefix} " if title_prefix else ""
     save_head = f"{save_prefix}_" if save_prefix else ""
 
@@ -154,6 +187,8 @@ def plot_final_samples(generator, fixed_noise, latent_dim, device, save_prefix="
 
 
 def plot_gan_comparison(vanilla_history, lsgan_history, images_dir="images/lsgan"):
+    """Plot epoch-level losses and margins for both GAN variants."""
+
     plt.figure(figsize=(14, 5))
     plt.subplot(1, 2, 1)
     plt.plot(vanilla_history["epoch_g_losses"], label="Vanilla G", color="tab:blue")
@@ -167,7 +202,9 @@ def plot_gan_comparison(vanilla_history, lsgan_history, images_dir="images/lsgan
     plt.legend()
 
     plt.subplot(1, 2, 2)
-    plt.plot(vanilla_history["epoch_margins"], label="Vanilla margin", color="tab:purple")
+    plt.plot(
+        vanilla_history["epoch_margins"], label="Vanilla margin", color="tab:purple"
+    )
     plt.plot(lsgan_history["epoch_margins"], label="LSGAN margin", color="tab:brown")
     plt.title("Epoch Margin Comparison")
     plt.xlabel("Epoch")
@@ -181,7 +218,11 @@ def plot_gan_comparison(vanilla_history, lsgan_history, images_dir="images/lsgan
     plt.close()
 
 
-def plot_side_by_side_fixed_samples(vanilla_generator, lsgan_generator, fixed_noise, images_dir="images/lsgan"):
+def plot_side_by_side_fixed_samples(
+    vanilla_generator, lsgan_generator, fixed_noise, images_dir="images/lsgan"
+):
+    """Plot fixed-noise outputs from the two generators side by side."""
+
     vanilla_generator.eval()
     lsgan_generator.eval()
 
@@ -189,12 +230,16 @@ def plot_side_by_side_fixed_samples(vanilla_generator, lsgan_generator, fixed_no
         vanilla_imgs = denorm(vanilla_generator(fixed_noise)).clamp(0.0, 1.0)
         lsgan_imgs = denorm(lsgan_generator(fixed_noise)).clamp(0.0, 1.0)
 
-    fig, axes = plt.subplots(1, 2, figsize=(12, 6))
-    axes[0].imshow(np.transpose(make_grid(vanilla_imgs[:64].cpu(), nrow=8).numpy(), (1, 2, 0)))
+    _, axes = plt.subplots(1, 2, figsize=(12, 6))
+    axes[0].imshow(
+        np.transpose(make_grid(vanilla_imgs[:64].cpu(), nrow=8).numpy(), (1, 2, 0))
+    )
     axes[0].set_title("Vanilla GAN (fixed noise)")
     axes[0].axis("off")
 
-    axes[1].imshow(np.transpose(make_grid(lsgan_imgs[:64].cpu(), nrow=8).numpy(), (1, 2, 0)))
+    axes[1].imshow(
+        np.transpose(make_grid(lsgan_imgs[:64].cpu(), nrow=8).numpy(), (1, 2, 0))
+    )
     axes[1].set_title("LSGAN (fixed noise)")
     axes[1].axis("off")
 
