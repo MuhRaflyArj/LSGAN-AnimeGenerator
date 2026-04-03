@@ -1,9 +1,12 @@
 import random
-import importlib
 from typing import Dict
 
 import matplotlib.pyplot as plt
 import torch
+
+from torchmetrics.image.fid import FrechetInceptionDistance
+from torchmetrics.image.kid import KernelInceptionDistance
+from lpips.lpips import LPIPS
 
 
 def _to_uint8_from_tanh(x: torch.Tensor) -> torch.Tensor:
@@ -12,17 +15,6 @@ def _to_uint8_from_tanh(x: torch.Tensor) -> torch.Tensor:
 
 
 def _compute_fid_kid(generator, dataloader, device, latent_dim: int, max_samples: int) -> Dict[str, float]:
-    try:
-        fid_mod = importlib.import_module("torchmetrics.image.fid")
-        kid_mod = importlib.import_module("torchmetrics.image.kid")
-    except Exception as exc:
-        raise ImportError(
-            "torchmetrics is missing. Install with: pip install torchmetrics torch-fidelity"
-        ) from exc
-
-    FrechetInceptionDistance = getattr(fid_mod, "FrechetInceptionDistance")
-    KernelInceptionDistance = getattr(kid_mod, "KernelInceptionDistance")
-
     fid = FrechetInceptionDistance(feature=2048, normalize=False).to(device)
     kid = KernelInceptionDistance(subset_size=50, normalize=False).to(device)
 
@@ -61,17 +53,10 @@ def _compute_fid_kid(generator, dataloader, device, latent_dim: int, max_samples
 
 
 def _compute_lpips_diversity(generator, device, latent_dim: int, sample_count: int = 128, pair_count: int = 64) -> float:
-    try:
-        lpips_mod = importlib.import_module("lpips")
-    except Exception as exc:
-        raise ImportError(
-            "LPIPS package is missing. Install with: pip install lpips"
-        ) from exc
-
     pair_count = max(1, pair_count)
     sample_count = max(2, sample_count)
 
-    metric = lpips_mod.LPIPS(net="alex").to(device)
+    metric = LPIPS(net="alex").to(device)
     metric.eval()
 
     generator.eval()
