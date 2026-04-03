@@ -1,3 +1,5 @@
+"""Checkpoint saving helpers for GAN training runs."""
+
 from pathlib import Path
 
 import torch
@@ -15,6 +17,8 @@ def save_best_checkpoint(
     optimizer_g,
     optimizer_d,
 ):
+    """Save the best checkpoint and separate generator/discriminator weights."""
+
     checkpoints_dir.mkdir(parents=True, exist_ok=True)
     torch.save(
         {
@@ -30,12 +34,26 @@ def save_best_checkpoint(
         },
         checkpoints_dir / f"{run_name}_best.pt",
     )
-    torch.save(generator.state_dict(), checkpoints_dir / f"{run_name}_generator_best.pt")
-    torch.save(discriminator.state_dict(), checkpoints_dir / f"{run_name}_discriminator_best.pt")
+    torch.save(
+        generator.state_dict(), checkpoints_dir / f"{run_name}_generator_best.pt"
+    )
+    torch.save(
+        discriminator.state_dict(),
+        checkpoints_dir / f"{run_name}_discriminator_best.pt",
+    )
 
 
-def save_final_artifacts(checkpoints_dir: Path, run_name: str, generator, discriminator, history: dict):
+def save_final_artifacts(
+    checkpoints_dir: Path, run_name: str, generator, discriminator, history: dict
+):
+    """Save the final model weights and training history."""
+
     checkpoints_dir.mkdir(parents=True, exist_ok=True)
-    torch.save(generator.state_dict(), checkpoints_dir / f"{run_name}_generator_final.pt")
-    torch.save(discriminator.state_dict(), checkpoints_dir / f"{run_name}_discriminator_final.pt")
+    torch.save(
+        generator.state_dict(), checkpoints_dir / f"{run_name}_generator_final.pt"
+    )
+    torch.save(
+        discriminator.state_dict(),
+        checkpoints_dir / f"{run_name}_discriminator_final.pt",
+    )
     torch.save(history, checkpoints_dir / f"{run_name}_training_history.pt")

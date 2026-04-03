@@ -1,20 +1,27 @@
+"""Evaluation metrics for comparing trained GAN generators."""
+
 import random
 from typing import Dict
 
 import matplotlib.pyplot as plt
 import torch
-
+from lpips.lpips import LPIPS
 from torchmetrics.image.fid import FrechetInceptionDistance
 from torchmetrics.image.kid import KernelInceptionDistance
-from lpips.lpips import LPIPS
 
 
 def _to_uint8_from_tanh(x: torch.Tensor) -> torch.Tensor:
+    """Convert tanh-scaled images to uint8 format."""
+
     x = ((x.clamp(-1.0, 1.0) + 1.0) / 2.0) * 255.0
     return x.to(torch.uint8)
 
 
-def _compute_fid_kid(generator, dataloader, device, latent_dim: int, max_samples: int) -> Dict[str, float]:
+def _compute_fid_kid(
+    generator, dataloader, device, latent_dim: int, max_samples: int
+) -> Dict[str, float]:
+    """Compute FID and KID scores for one generator."""
+
     fid = FrechetInceptionDistance(feature=2048, normalize=False).to(device)
     kid = KernelInceptionDistance(subset_size=50, normalize=False).to(device)
 
@@ -52,7 +59,11 @@ def _compute_fid_kid(generator, dataloader, device, latent_dim: int, max_samples
     }
 
 
-def _compute_lpips_diversity(generator, device, latent_dim: int, sample_count: int = 128, pair_count: int = 64) -> float:
+def _compute_lpips_diversity(
+    generator, device, latent_dim: int, sample_count: int = 128, pair_count: int = 64
+) -> float:
+    """Estimate sample diversity with LPIPS pairwise distances."""
+
     pair_count = max(1, pair_count)
     sample_count = max(2, sample_count)
 
@@ -86,7 +97,7 @@ def evaluate_gan_models(
     lpips_samples: int = 128,
     lpips_pairs: int = 64,
 ) -> Dict[str, Dict[str, float]]:
-    """Compute comparable FID, KID, and LPIPS diversity for vanilla and LSGAN."""
+    """Compute FID, KID, and LPIPS diversity for both generators."""
 
     vanilla_scores = _compute_fid_kid(
         generator=vanilla_generator,
@@ -125,18 +136,30 @@ def evaluate_gan_models(
 
 
 def print_metrics_table(metrics: Dict[str, Dict[str, float]]) -> None:
+    """Print a compact metrics summary table."""
+
     print("\nGAN Metric Summary")
-    print("Model      | FID (lower) | KID mean (lower) | KID std | LPIPS diversity (higher)")
+    print(
+        "Model      | FID (lower) | KID mean (lower) | KID std | LPIPS diversity (higher)"
+    )
     print("-" * 80)
 
     for model_name in ["vanilla", "lsgan"]:
         m = metrics[model_name]
         print(
-            f"{model_name:<10} | {m['fid']:<11.4f} | {m['kid_mean']:<16.6f} | {m['kid_std']:<7.6f} | {m['lpips_diversity']:<.6f}"
+            f"{model_name:<10} | "
+            f"{m['fid']:<11.4f} | "
+            f"{m['kid_mean']:<16.6f} | "
+            f"{m['kid_std']:<7.6f} | "
+            f"{m['lpips_diversity']:<.6f}"
         )
 
 
-def plot_metrics_comparison(metrics: Dict[str, Dict[str, float]], images_dir: str = "images/lsgan") -> None:
+def plot_metrics_comparison(
+    metrics: Dict[str, Dict[str, float]], images_dir: str = "images/lsgan"
+) -> None:
+    """Plot a side-by-side comparison of the evaluation metrics."""
+
     labels = ["FID", "KID", "LPIPS"]
 
     vanilla_vals = [

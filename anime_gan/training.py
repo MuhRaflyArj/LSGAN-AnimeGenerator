@@ -1,6 +1,8 @@
+"""Training loop utilities for Vanilla GAN and LSGAN experiments."""
+
 import numpy as np
 import torch
-import torch.nn as nn
+from torch import nn
 from tqdm import tqdm
 
 from .checkpointing import save_best_checkpoint, save_final_artifacts
@@ -9,6 +11,8 @@ from .visualization import sample_images
 
 
 def create_training_components(cfg, device, gan_type):
+    """Create the models, losses, optimizers, and schedulers for training."""
+
     if gan_type not in {"vanilla", "lsgan"}:
         raise ValueError("gan_type must be 'vanilla' or 'lsgan'")
 
@@ -23,8 +27,12 @@ def create_training_components(cfg, device, gan_type):
     else:
         adversarial_loss = nn.MSELoss().to(device)
 
-    optimizer_g = torch.optim.Adam(generator.parameters(), lr=cfg.lr_g, betas=(cfg.b1, cfg.b2))
-    optimizer_d = torch.optim.Adam(discriminator.parameters(), lr=cfg.lr_d, betas=(cfg.b1, cfg.b2))
+    optimizer_g = torch.optim.Adam(
+        generator.parameters(), lr=cfg.lr_g, betas=(cfg.b1, cfg.b2)
+    )
+    optimizer_d = torch.optim.Adam(
+        discriminator.parameters(), lr=cfg.lr_d, betas=(cfg.b1, cfg.b2)
+    )
 
     scheduler_g = torch.optim.lr_scheduler.ReduceLROnPlateau(
         optimizer_g, mode="max", factor=0.5, patience=8, threshold=1e-3, min_lr=1e-6
@@ -45,6 +53,8 @@ def create_training_components(cfg, device, gan_type):
 
 
 def train_gan(cfg, dataloader, device, gan_type="lsgan", run_name=None):
+    """Train one GAN variant and save checkpoints and history."""
+
     if run_name is None:
         run_name = gan_type
 
@@ -73,7 +83,11 @@ def train_gan(cfg, dataloader, device, gan_type="lsgan", run_name=None):
     fixed_noise = torch.randn(cfg.fixed_sample_size, cfg.latent_dim, device=device)
 
     for epoch in range(cfg.n_epochs):
-        epoch_bar = tqdm(dataloader, desc=f"{run_name} | Epoch {epoch + 1}/{cfg.n_epochs}", leave=False)
+        epoch_bar = tqdm(
+            dataloader,
+            desc=f"{run_name} | Epoch {epoch + 1}/{cfg.n_epochs}",
+            leave=False,
+        )
 
         g_epoch_vals, d_epoch_vals = [], []
         d_real_epoch_vals, d_fake_epoch_vals = [], []
@@ -82,12 +96,20 @@ def train_gan(cfg, dataloader, device, gan_type="lsgan", run_name=None):
             real_imgs = imgs.to(device, non_blocking=True)
             batch_size_now = real_imgs.size(0)
 
-            real_targets = torch.full((batch_size_now, 1), cfg.real_label, device=device)
-            fake_targets = torch.full((batch_size_now, 1), cfg.fake_label, device=device)
+            real_targets = torch.full(
+                (batch_size_now, 1), cfg.real_label, device=device
+            )
+            fake_targets = torch.full(
+                (batch_size_now, 1), cfg.fake_label, device=device
+            )
 
             if cfg.label_noise > 0:
-                real_targets = (real_targets + cfg.label_noise * torch.rand_like(real_targets)).clamp(0.8, 1.0)
-                fake_targets = (fake_targets + cfg.label_noise * torch.rand_like(fake_targets)).clamp(0.0, 0.2)
+                real_targets = (
+                    real_targets + cfg.label_noise * torch.rand_like(real_targets)
+                ).clamp(0.8, 1.0)
+                fake_targets = (
+                    fake_targets + cfg.label_noise * torch.rand_like(fake_targets)
+                ).clamp(0.0, 0.2)
 
             optimizer_d.zero_grad(set_to_none=True)
             z = torch.randn((batch_size_now, cfg.latent_dim), device=device)
@@ -251,4 +273,12 @@ def train_gan(cfg, dataloader, device, gan_type="lsgan", run_name=None):
 
 
 def train_lsgan(cfg, dataloader, device, run_name="lsgan"):
-    return train_gan(cfg=cfg, dataloader=dataloader, device=device, gan_type="lsgan", run_name=run_name)
+    """Train the least-squares GAN variant."""
+
+    return train_gan(
+        cfg=cfg,
+        dataloader=dataloader,
+        device=device,
+        gan_type="lsgan",
+        run_name=run_name,
+    )

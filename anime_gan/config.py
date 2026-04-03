@@ -1,3 +1,5 @@
+"""Configuration helpers for the anime GAN training pipeline."""
+
 import os
 import random
 from dataclasses import dataclass, field
@@ -9,8 +11,10 @@ import torch
 
 @dataclass
 class LSGANConfig:
+    """Store hyperparameters, paths, and runtime helpers for training."""
+
     seed: int = 51
-    n_epochs: int = 300
+    n_epochs: int = 3
     batch_size: int = 64
     lr_g: float = 2e-4
     lr_d: float = 1e-4
@@ -30,26 +34,38 @@ class LSGANConfig:
 
     data_root: Path = field(default_factory=lambda: Path("data/anime"))
     zip_name: Path = field(default_factory=lambda: Path("animefaces.zip"))
-    data_url: str = "https://storage.googleapis.com/learning-datasets/Resources/anime-faces.zip"
+    data_url: str = (
+        "https://storage.googleapis.com/learning-datasets/Resources/anime-faces.zip"
+    )
     images_dir: Path = field(default_factory=lambda: Path("images/lsgan"))
     checkpoints_dir: Path = field(default_factory=lambda: Path("checkpoints"))
 
     @property
     def image_dir(self) -> Path:
+        """Return the extracted anime image directory."""
+
         return self.data_root / "images"
 
     def set_seed(self) -> None:
+        """Seed Python, NumPy, and PyTorch for reproducible runs."""
+
         random.seed(self.seed)
         np.random.seed(self.seed)
         torch.manual_seed(self.seed)
 
     def get_device(self) -> torch.device:
+        """Return CUDA when available, otherwise CPU."""
+
         return torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def create_dirs(self) -> None:
+        """Create the data, image, and checkpoint directories."""
+
         self.data_root.mkdir(parents=True, exist_ok=True)
         self.images_dir.mkdir(parents=True, exist_ok=True)
         self.checkpoints_dir.mkdir(parents=True, exist_ok=True)
 
     def ensure_dirs(self) -> None:
+        """Ensure all required output directories exist."""
+
         self.create_dirs()

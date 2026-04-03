@@ -1,8 +1,12 @@
-import torch.nn as nn
+"""Generator and discriminator networks for the anime GAN models."""
+
+from torch import nn
 from torch.nn.utils import spectral_norm
 
 
 def weight_init_normal(m):
+    """Apply normal initialization to supported layers."""
+
     if isinstance(m, (nn.Conv2d, nn.ConvTranspose2d, nn.Linear)):
         nn.init.normal_(m.weight.data, 0.0, 0.02)
         if getattr(m, "bias", None) is not None:
@@ -13,7 +17,11 @@ def weight_init_normal(m):
 
 
 class Generator(nn.Module):
+    """Map latent vectors to 64x64 RGB anime face images."""
+
     def __init__(self, latent_dim=128, channels=3):
+        """Build the generator network."""
+
         super().__init__()
         self.network = nn.Sequential(
             nn.Linear(latent_dim, 512 * 4 * 4),
@@ -37,11 +45,17 @@ class Generator(nn.Module):
         )
 
     def forward(self, x):
+        """Generate an image batch from latent vectors."""
+
         return self.network(x)
 
 
 class Discriminator(nn.Module):
+    """Score input images as real or fake."""
+
     def __init__(self, channels=3):
+        """Build the discriminator network."""
+
         super().__init__()
         self.network = nn.Sequential(
             spectral_norm(nn.Conv2d(channels, 64, 4, 2, 1)),
@@ -59,6 +73,8 @@ class Discriminator(nn.Module):
         self.adv_layer = spectral_norm(nn.Linear(512 * 4 * 4, 1))
 
     def forward(self, x):
+        """Return discriminator logits for a batch of images."""
+
         x = self.network(x)
         x = x.view(x.shape[0], -1)
         return self.adv_layer(x)
