@@ -14,6 +14,8 @@ dependencies = [
   "torchmetrics>=1.4,<2",
   "torch-fidelity>=0.3,<0.4",
   "lpips>=0.1.4,<0.2",
+  "isort>=8.0.1",
+  "pylint>=4.0.5",
 ]
 
 [build-system]
